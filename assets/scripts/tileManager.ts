@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Graphics, Prefab, instantiate, Label, View } from 'cc';
 import { Tile } from './tile';
+import { GroupManager, Grid } from './groupManager';
 
 const { ccclass, property } = _decorator;
 
@@ -15,7 +16,11 @@ export class tileManager extends Component {
 
     private _tiles: Node[][] = [];
 
+    private _grpMgr: GroupManager;
+
     start() {
+        this._grpMgr = new GroupManager();
+
         let view = View.instance.getVisibleSize();  // 1280 720
 
         // 初始化很多的小方块
@@ -38,32 +43,82 @@ export class tileManager extends Component {
     }
 
     update(deltaTime: number) {
+        if (!this._grpMgr.update()) {
+            return;
+        }
+
+        this.reset();
+
+        let groups = this._grpMgr.groups;
+        for (let i = 0; i < groups.length; i++) {
+            let grids = groups[i].get_grids();
+            for (let j = 0; j < grids.length; j++) {
+                this.update_grid(grids[j]);
+            }
+        }
     }
 
-    // 开启新的关卡
-    startLevel(index: number): number {
-        let count = 0;
+    update_grid(grid: Grid) {
+        let tile = this._tiles[grid.x][grid.y].getComponent(Tile);
 
-        // 从网络上拉取数据，并设置本关卡
+        switch (grid.type) {
+            case 1:
+                tile.setGreen(true);
+                break;
+            case 2:
+                tile.setBlue(true);
+                break;
 
+            case 3:
+                tile.setRed(true);
+                break;
+        }
+    }
+
+    reset() {
         for (let i = 0; i < ROWS; i++) {
             for (let j = 0; j < COLS; j++) {
                 let tile = this._tiles[i][j].getComponent(Tile);
                 tile.reset();
-
-                let r = Math.floor(Math.random() * 1000) % 20;
-                if (r == 1) {
-                    tile.setGreen(true);
-                } else if (r == 2) {
-                    tile.setBlue(true);
-                    count++;
-                }
             }
         }
-
-        return count;
     }
 
+    // 开启新的关卡
+    startLevel(index: number): number {
+
+        // 从网络上拉取数据，并设置本关卡
+        let cfg = {
+            "level": "第一关",
+            "groups": [
+                {
+                    "comment": "向左移动到末尾",
+                    "grids": [[0, 3], [0, 0], [0, 1], [0, 2]],
+                    "type": 1,
+                    "action": 2,
+                    "interval": 100
+                },
+                {
+                    "comment": "向右移动到末尾",
+                    "grids": [[1, 2], [1, 3]],
+                    "type": 3,
+                    "action": 2,
+                    "interval": 200
+                },
+                {
+                    "comment": "向右1移动到末尾",
+                    "grids": [[2, 2], [2, 5]],
+                    "type": 2,
+                    "action": 1,
+                    "interval": 200
+                }
+            ]
+        };
+
+        return this._grpMgr.parse_actions(cfg);
+    }
+
+    onTilePressed(row: number, col: number) {
+        this._grpMgr.onTilePressed(row, col);
+    }
 }
-
-

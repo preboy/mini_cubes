@@ -2,6 +2,7 @@ import { _decorator, Component, Node, Sprite, SpriteFrame, CCInteger, Label, fin
 const { ccclass, property } = _decorator;
 
 import { Game } from './game';
+import { tileManager } from './tileManager';
 
 @ccclass('Tile')
 export class Tile extends Component {
@@ -117,6 +118,13 @@ export class Tile extends Component {
             this._blueCover = false;
             this.fresh();
             game.postScoreAdd();
+            this.notify();
         }
+    }
+
+    // 通知tileManager
+    notify() {
+        let tileMgr = find("Canvas/background/tileManager").getComponent(tileManager);
+        tileMgr.onTilePressed(this._row, this._col);
     }
 }
