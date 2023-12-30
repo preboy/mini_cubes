@@ -1,12 +1,10 @@
 import { _decorator, Component, Node, Graphics, Prefab, instantiate, Label, View } from 'cc';
 import { Tile } from './tile';
 import { GroupManager, Grid } from './groupManager';
+import { ROWS, COLS, SIDE } from './global';
+
 
 const { ccclass, property } = _decorator;
-
-const ROWS = 12;
-const COLS = 22;
-const SIDE = 50;
 
 @ccclass('tileManager')
 export class tileManager extends Component {
@@ -88,6 +86,8 @@ export class tileManager extends Component {
     startLevel(index: number): number {
 
         // 从网络上拉取数据，并设置本关卡
+        // type:    0:black 1:green 2:blue 3:red 4:yellow
+        // action:  1 left  2 right
         let cfg = {
             "level": "第一关",
             "groups": [
@@ -95,27 +95,32 @@ export class tileManager extends Component {
                     "comment": "向左移动到末尾",
                     "grids": [[0, 3], [0, 0], [0, 1], [0, 2]],
                     "type": 1,
-                    "action": 2,
-                    "interval": 100
+                    "action": 0,
+                    "interval": 500
                 },
                 {
                     "comment": "向右移动到末尾",
                     "grids": [[1, 2], [1, 3]],
                     "type": 3,
-                    "action": 2,
-                    "interval": 200
+                    "action": 1,
+                    "interval": 500
                 },
                 {
                     "comment": "向右1移动到末尾",
                     "grids": [[2, 2], [2, 5]],
                     "type": 2,
-                    "action": 1,
-                    "interval": 200
+                    "action": 0,
+                    "interval": 500
                 }
             ]
         };
 
         return this._grpMgr.parse_actions(cfg);
+    }
+
+    game_completed() {
+        this.reset();
+        this._grpMgr.game_completed();
     }
 
     onTilePressed(row: number, col: number) {

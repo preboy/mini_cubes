@@ -48,6 +48,8 @@ export class Game extends Component {
         if (this._currentLevel != 0) {
             this.setResult(false);
         }
+
+        this.game_completed();
     }
 
     // 得分
@@ -74,5 +76,11 @@ export class Game extends Component {
         this._currentLevel = 0;
 
         find("Canvas/background/uiMain").getComponent(uiMain).showResult(val, this._finishedLevel);
+
+        this.game_completed();
+    }
+
+    game_completed() {
+        find("Canvas/background/tileManager").getComponent(tileManager).game_completed();
     }
 }

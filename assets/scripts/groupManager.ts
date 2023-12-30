@@ -1,3 +1,4 @@
+import { ROWS, COLS } from './global';
 
 // ----------------------------------------------------------------------------
 
@@ -79,18 +80,21 @@ class Group {
         return false;
     }
 
-    onTilePressed(row: number, col: number) {
+    onTilePressed(row: number, col: number): boolean {
         // 只处理蓝色的块（积分块)
         if (this._type != 2) {
-            return;
+            return false;
         }
 
         for (let i = 0; i < this._grids.length; i++) {
             let grid = this._grids[i];
             if (grid.x == row && grid.y == col) {
                 grid.type = 0;
+                return true;
             }
         }
+
+        return false;
     }
 
 }
@@ -147,8 +151,13 @@ class GroupManager {
     onTilePressed(row: number, col: number) {
         for (let i = 0; i < this._groups.length; i++) {
             if (this._groups[i].onTilePressed(row, col)) {
+                break;
             }
         }
+    }
+
+    game_completed() {
+        this._groups = [];
     }
 }
 
@@ -163,10 +172,20 @@ class ActionNone extends Action { }
 
 class ActionMoveToLeft extends Action {
     update(group: Group) {
-        console.log("ActionMoveToLeft");
+        let out = true;
         group.get_grids().forEach((grid) => {
-            console.log("grid:", grid);
+            grid.y--;
+            if (grid.y >= 0) {
+                out = false;
+            }
         })
+
+        // 如果全部移除了边界，则位置换到最右边
+        if (out) {
+            group.get_grids().forEach((grid) => {
+                grid.y += COLS;
+            });
+        }
     }
 }
 

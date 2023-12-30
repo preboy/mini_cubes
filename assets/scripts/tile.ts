@@ -126,5 +126,6 @@ export class Tile extends Component {
     notify() {
         let tileMgr = find("Canvas/background/tileManager").getComponent(tileManager);
         tileMgr.onTilePressed(this._row, this._col);
+        console.log("notify:", this._row, this._col);
     }
 }
