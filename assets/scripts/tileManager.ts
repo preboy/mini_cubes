@@ -57,6 +57,10 @@ export class tileManager extends Component {
     }
 
     update_grid(grid: Grid) {
+        if (grid.x < 0 || grid.x >= ROWS || grid.y < 0 || grid.y >= COLS) {
+            return;
+        }
+
         let tile = this._tiles[grid.x][grid.y].getComponent(Tile);
 
         switch (grid.type) {
