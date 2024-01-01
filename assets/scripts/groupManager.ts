@@ -31,6 +31,7 @@ class Group {
     private _last: number;
     private _type: number;  // 颜色类型  // 0:black 1:green 2:blue 3:red 4:yellow
 
+    private _dirty: boolean;
     private _action: Action;
 
     constructor(type: number, action: number) {
@@ -38,6 +39,7 @@ class Group {
         this._interval = 100;
         this._last = 0;
         this._type = type;
+        this._dirty = true;
 
         if (action > 0) {
             let cls = MAP_ACTIONS[action];
@@ -68,8 +70,9 @@ class Group {
     }
 
     update(curr: number): boolean {
-        if (curr - this._last >= this._interval) {
+        if (this._dirty || curr - this._last >= this._interval) {
             this._last = curr;
+            this._dirty = false;
 
             if (this._action) {
                 this._action.update(this);
@@ -170,6 +173,7 @@ class Action {
 
 class ActionNone extends Action { }
 
+// 向左移动到消失，在右边出现
 class ActionMoveToLeft extends Action {
     update(group: Group) {
         let out = true;
@@ -189,12 +193,23 @@ class ActionMoveToLeft extends Action {
     }
 }
 
+// 向右移动到消失，在左边出现
 class ActionMoveToRight extends Action {
     update(group: Group) {
-        console.log("ActionMoveToRight");
+        let out = true;
         group.get_grids().forEach((grid) => {
-            console.log("grid:", grid);
+            grid.y++;
+            if (grid.y < COLS) {
+                out = false;
+            }
         })
+
+        // 如果全部移除了边界，则位置换到最右边
+        if (out) {
+            group.get_grids().forEach((grid) => {
+                grid.y -= COLS;
+            });
+        }
     }
 }
 

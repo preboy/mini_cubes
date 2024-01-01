@@ -41,6 +41,8 @@ export class Game extends Component {
 
         this._currentLevel = this._finishedLevel + 1;
         this._totalScore = tm.startLevel(this._currentLevel);
+
+        console.log("this.", this._totalScore)
     }
 
     // 游戏结束
