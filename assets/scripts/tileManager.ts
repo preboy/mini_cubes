@@ -1,5 +1,6 @@
-import { _decorator, Component, Node, Graphics, Prefab, instantiate, Label, View } from 'cc';
+import { _decorator, Component, Node, Graphics, Prefab, instantiate, Label, View, find } from 'cc';
 import { Tile } from './tile';
+import { Game } from './game';
 import { GroupManager, Grid } from './groupManager';
 import { ROWS, COLS, SIDE } from './global';
 
@@ -15,6 +16,8 @@ export class tileManager extends Component {
     private _tiles: Node[][] = [];
 
     private _grpMgr: GroupManager;
+
+    private _tile_pressed: Tile;
 
     start() {
         this._grpMgr = new GroupManager();
@@ -70,9 +73,11 @@ export class tileManager extends Component {
             case 2:
                 tile.setBlue(true);
                 break;
-
             case 3:
                 tile.setRed(true);
+                if (tile == this._tile_pressed) {
+                    find("Canvas/background/uiMain").getComponent(Game).postGameOver();
+                }
                 break;
         }
     }
@@ -82,6 +87,15 @@ export class tileManager extends Component {
             for (let j = 0; j < COLS; j++) {
                 let tile = this._tiles[i][j].getComponent(Tile);
                 tile.reset();
+            }
+        }
+    }
+
+    reset_tips() {
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                let tile = this._tiles[i][j].getComponent(Tile);
+                tile.set_tip(0);
             }
         }
     }
@@ -133,15 +147,49 @@ export class tileManager extends Component {
             ]
         };
 
-        return this._grpMgr.parse_actions(cfg);
+        let count = this._grpMgr.parse_actions(cfg);
+        this.set_tile_tips(null);
+
+        return count;
     }
 
     game_completed() {
         this.reset();
+        this.reset_tips();
         this._grpMgr.game_completed();
     }
 
     onTilePressed(row: number, col: number) {
         this._grpMgr.onTilePressed(row, col);
+    }
+
+    set_tile_tips(tile: Tile) {
+        this.reset_tips();
+        this._tile_pressed = tile;
+
+        // 未点击任何块
+        if (tile == null) {
+            for (let i = 0; i < ROWS; i++) {
+                for (let j = 0; j < COLS; j++) {
+                    if (i < 2 || j < 2 || (ROWS - i) <= 2 || (COLS - j) <= 2) {
+                        let tile = this._tiles[i][j].getComponent(Tile);
+                        tile.set_tip(2);
+                    }
+                }
+            }
+            return;
+        }
+
+        let [row, col] = tile.get_row_col();
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                let tile = this._tiles[i][j].getComponent(Tile);
+                if (i == row && j == col) {
+                    tile.set_tip(1);
+                } else if (Math.abs(i - row) <= 2 && Math.abs(j - col) <= 2) {
+                    tile.set_tip(2);
+                }
+            }
+        }
     }
 }

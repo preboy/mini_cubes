@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Sprite, SpriteFrame, CCInteger, Label, find } from 'cc';
+import { _decorator, Component, Node, Sprite, SpriteFrame, find } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { Game } from './game';
@@ -11,8 +11,6 @@ export class Tile extends Component {
     @property({ type: [SpriteFrame] })
     sprites = [];
 
-    _pressed: boolean = false;
-
     private _row: number;
     private _col: number;
 
@@ -23,6 +21,15 @@ export class Tile extends Component {
 
     private _status: number; // 当前状态，对应于应该绘制的sprite索引
     private _dangerous: boolean;  // 是否危险
+
+    @property({ type: [SpriteFrame] })
+    tips = [];
+
+    @property({ type: Sprite })
+    tip: Sprite = null;
+
+    // 当前tip的索引
+    private _tip_value: number = 0;
 
     onLoad() {
         this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
@@ -54,16 +61,13 @@ export class Tile extends Component {
     }
 
     onTouchStart() {
-        this._pressed = true;
         this.onPress();
     }
 
     onTouchEnd() {
-        this._pressed = false;
     }
 
     onTouchCancel() {
-        this._pressed = false;
     }
 
     // ----------------------------------------------------
@@ -71,6 +75,10 @@ export class Tile extends Component {
     set_row_col(row: number, col: number) {
         this._row = row;
         this._col = col;
+    }
+
+    get_row_col(): [row: number, col: number] {
+        return [this._row, this._col];
     }
 
     reset() {
@@ -88,11 +96,6 @@ export class Tile extends Component {
     setRed(val: boolean) {
         this._redCover = val;
         this.fresh();
-
-        // 如果当前被踩中，则结束游戏
-        if (this._pressed) {
-            find("Canvas/background/uiMain").getComponent(Game).postGameOver();
-        }
     }
 
     setBlue(val: boolean) {
@@ -100,8 +103,32 @@ export class Tile extends Component {
         this.fresh();
     }
 
+    // 设置提示图标 0(无) 1(绿色)  2(灰色)
+    set_tip(val: number) {
+        this._tip_value = val;
+
+        console.log("set_tip", this._tip_value);
+
+        if (val == 1) {
+            this.tip.spriteFrame = this.tips[0];
+        } else if (val == 2) {
+            this.tip.spriteFrame = this.tips[1];
+        } else {
+            this.tip.spriteFrame = null;
+        }
+    }
+
     // ----------------------------------------------------
     onPress() {
+        console.log("OnPress", this._tip_value);
+
+        if (this._tip_value != 2) {
+            // 播放禁止音乐
+            return;
+        }
+
+        this.set_tips();
+
         if (this._greenCover) {
             return;
         }
@@ -116,16 +143,20 @@ export class Tile extends Component {
 
         if (this._blueCover) {
             this._blueCover = false;
-            this.fresh();
             game.postScoreAdd();
             this.notify();
-        }
+            this.fresh();
+        };
     }
 
     // 通知tileManager
     notify() {
         let tileMgr = find("Canvas/background/tileManager").getComponent(tileManager);
         tileMgr.onTilePressed(this._row, this._col);
-        console.log("notify:", this._row, this._col);
+    }
+
+    set_tips() {
+        let tm = find("Canvas/background/tileManager").getComponent(tileManager);
+        tm.set_tile_tips(this);
     }
 }
